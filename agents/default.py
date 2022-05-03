@@ -47,6 +47,8 @@ class NormalNN(nn.Module):
         elif self.config['optimizer'] == 'amsgrad':
             optimizer_arg['amsgrad'] = True
             self.config['optimizer'] = 'Adam'
+            optimizer_arg['betas'] = (0.9, 0.999)
+            optimizer_arg['eps'] = 0.002
 
         self.optimizer = torch.optim.__dict__[self.config['optimizer']](**optimizer_arg)
         self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=self.config['schedule'],
@@ -147,6 +149,8 @@ class NormalNN(nn.Module):
         loss = self.criterion(out, targets, tasks)
         self.optimizer.zero_grad()
         loss.backward()
+        for param in self.parameters():
+            nn.utils.clip_grad_norm_(param, 1)
         self.optimizer.step()
         return loss.detach(), out
 
@@ -155,7 +159,8 @@ class NormalNN(nn.Module):
             self.log('Optimizer is reset!')
             self.init_optimizer()
 
-        for epoch in range(self.config['schedule'][-1]):
+        #for epoch in range(self.config['schedule'][-1]):
+        for epoch in range(1, 2):
             data_timer = Timer()
             batch_timer = Timer()
             batch_time = AverageMeter()
@@ -175,6 +180,9 @@ class NormalNN(nn.Module):
             batch_timer.tic()
             self.log('Itr\t\tTime\t\t  Data\t\t  Loss\t\tAcc')
             for i, (input, target, task) in enumerate(train_loader):
+
+                if i > 4:
+                    break
 
                 data_time.update(data_timer.toc())  # measure data loading time
 

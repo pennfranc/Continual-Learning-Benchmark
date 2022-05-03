@@ -10,12 +10,17 @@ class MLP(nn.Module):
         self.linear = nn.Sequential(
             nn.Linear(self.in_dim, hidden_dim),
             #nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
             nn.Linear(hidden_dim, hidden_dim),
             #nn.BatchNorm1d(hidden_dim),
-            nn.ReLU(inplace=True),
+            nn.Tanh(),
+            nn.Linear(hidden_dim, hidden_dim),
+            #nn.BatchNorm1d(hidden_dim),
+            nn.Tanh(),
         )
         self.last = nn.Linear(hidden_dim, out_dim)  # Subject to be replaced dependent on task
+
+        self.apply(init_weights)
 
     def features(self, x):
         x = self.linear(x.view(-1,self.in_dim))
@@ -29,14 +34,21 @@ class MLP(nn.Module):
         x = self.features(x)
         x = self.logits(x)
         return x
+    
+def init_weights(m):    
+    if isinstance(m, nn.Linear):
+        torch.nn.init.xavier_normal(m.weight)
+        nn.init.constant_(m.bias, 0)
 
 
 def MLP100():
     return MLP(hidden_dim=100)
 
+def MLP256():
+    return MLP(hidden_dim=256)
 
 def MLP400():
-    return MLP(hidden_dim=400)
+    return MLP(hidden_dim=256)
 
 
 def MLP1000():
