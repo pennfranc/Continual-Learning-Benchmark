@@ -1,1 +1,3 @@
 python3 -u iBatchLearn.py --gpuid -1 --optimizer Adam    --force_out_dim 10 --no_class_remap --first_split_size 2 --other_split_size 2  --batch_size 128 --model_name MLP400 --lr 0.0002
+
+python3 -u iBatchLearn.py --gpuid -1 --optimizer Adam --repeat 5   --force_out_dim 10 --no_class_remap --first_split_size 2 --other_split_size 2  --batch_size 128 --model_name MLP400 --lr 0.0002 | tee outputs/quick-bp.log
