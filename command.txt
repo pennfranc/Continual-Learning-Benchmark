@@ -1,0 +1,8 @@
+python3 -u iBatchLearn.py --gpuid -1 --optimizer Adam --force_out_dim 10 --no_class_remap --first_split_size 2 --other_split_size 2  --batch_size 128 --model_name MLP400 --lr 0.0002
+
+python3 -u iBatchLearn.py --gpuid -1 --repeat 5 --optimizer Adam --force_out_dim 10 --no_class_remap --first_split_size 2 --other_split_size 2 --batch_size 128 --model_name MLP400 --lr 0.0002 | tee outputs/quick-bp-untouched.log
+
+(removed --incremental_class and --schedule)
+--no_class_remap makes sure we are doing class-IL. --incremental_class limits output nodes receiving errors
+
+including `if i > 4: break` and reducing the lr to 0.0002 leads to an increase in accuracy from 20% to 30%-40%

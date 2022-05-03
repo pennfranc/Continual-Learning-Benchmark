@@ -176,6 +176,9 @@ class NormalNN(nn.Module):
             self.log('Itr\t\tTime\t\t  Data\t\t  Loss\t\tAcc')
             for i, (input, target, task) in enumerate(train_loader):
 
+                if i > 4:
+                    break
+
                 data_time.update(data_timer.toc())  # measure data loading time
 
                 if self.gpu:
