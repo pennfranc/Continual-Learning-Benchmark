@@ -74,7 +74,7 @@ def run(args):
                 agent.add_valid_output_dim(task_output_space[train_name])
 
             # Learn
-            agent.learn_batch(train_loader, val_loader)
+            agent.learn_batch(train_loader, val_loader, task_idx=i)
 
             # Evaluate
             acc_table[train_name] = OrderedDict()

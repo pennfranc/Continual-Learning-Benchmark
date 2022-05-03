@@ -154,7 +154,7 @@ class NormalNN(nn.Module):
         self.optimizer.step()
         return loss.detach(), out
 
-    def learn_batch(self, train_loader, val_loader=None):
+    def learn_batch(self, train_loader, val_loader=None, task_idx=0):
         if self.reset_optimizer:  # Reset optimizer before learning each task
             self.log('Optimizer is reset!')
             self.init_optimizer()
@@ -181,7 +181,7 @@ class NormalNN(nn.Module):
             self.log('Itr\t\tTime\t\t  Data\t\t  Loss\t\tAcc')
             for i, (input, target, task) in enumerate(train_loader):
 
-                if i > 4:
+                if i > 4 + task_idx // 2:
                     break
 
                 data_time.update(data_timer.toc())  # measure data loading time
