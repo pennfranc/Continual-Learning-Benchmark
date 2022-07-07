@@ -30,6 +30,8 @@ class MLP(nn.Module):
         x = self.logits(x)
         return x
 
+def MLP20():
+    return MLP(hidden_dim=20)
 
 def MLP100():
     return MLP(hidden_dim=100)
