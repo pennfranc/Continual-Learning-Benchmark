@@ -50,7 +50,7 @@ class NormalNN(nn.Module):
 
         self.optimizer = torch.optim.__dict__[self.config['optimizer']](**optimizer_arg)
         self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=self.config['schedule'],
-                                                              gamma=0.1)
+                                                              gamma=0)
 
     def create_model(self):
         cfg = self.config
