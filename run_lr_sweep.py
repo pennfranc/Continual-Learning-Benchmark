@@ -20,6 +20,6 @@ for lr in lrs:
     return_codes.append(subprocess.Popen(f"python3 -u iBatchLearn.py --gpuid -1 --repeat {num_seeds} --optimizer Adam  --schedule 4  --force_out_dim 2 --first_split_size 2 --other_split_size 2 --batch_size {batch_size} --model_name MLP{size_hidden} --agent_type customization  --agent_name EWC_mnist        --lr {lr} --reg_coef {reg_coef}    | tee outputs/{log_name}/ewc/{lr=}.log", shell=True))
     
     # bp
-    return_codes.append(subprocess.Popen(f"python3 -u iBatchLearn.py --gpuid -1 --repeat {num_seeds} --optimizer Adam  --schedule 4  --force_out_dim 2 --first_split_size 2 --other_split_size 2 --batch_size {batch_size} --model_name MLP{size_hidden} --agent_type customization  --agent_name L2        --lr {lr} --reg_coef 0    | tee outputs/{log_name}/bp/{lr=}.log", shell=True))
+    return_codes.append(subprocess.Popen(f"python3 -u iBatchLearn.py --gpuid -1 --repeat {num_seeds} --optimizer Adam  --schedule 4  --force_out_dim 2 --first_split_size 2 --other_split_size 2 --batch_size {batch_size} --model_name MLP{size_hidden}        --lr {lr} --reg_coef 0    | tee outputs/{log_name}/bp/{lr=}.log", shell=True))
 
     exit_codes = [p.wait() for p in return_codes]
