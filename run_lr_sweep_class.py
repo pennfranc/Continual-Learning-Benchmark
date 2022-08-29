@@ -2,11 +2,11 @@ import subprocess
 import os
 
 batch_size = 512
-size_hidden = 20
-reg_coef_ewc = 100
-reg_coef_si = 3000
+size_hidden = 200
+reg_coef_ewc = 600
+reg_coef_si = 600
 lrs = [1 / 10**(i / 2) for i in range(2, 13, 1)]
-num_seeds = 10
+num_seeds = 5
 gpuid = 0
 epochs = 4
 log_name = f"lr-sweep-{batch_size=}-{size_hidden=}-{epochs=}-class"
@@ -16,7 +16,7 @@ for lr in lrs:
     return_codes = []
 
     # ewc
-    # this is done like in scripts/split_MNIST_incremental_domain.sh but smaller net
+    # this is done like in scripts/split_MNIST_incremental_class.sh but smaller net
     """folder = "outputs/" + log_name + f"/ewc-{reg_coef_ewc=}"
     os.makedirs(folder, exist_ok=True)
     return_codes.append(subprocess.Popen(
