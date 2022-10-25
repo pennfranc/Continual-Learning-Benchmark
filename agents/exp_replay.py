@@ -3,7 +3,7 @@ import numpy as np
 from importlib import import_module
 from .default import NormalNN
 from .regularization import SI, L2, EWC, MAS
-from dataloaders.wrapper import Storage
+from clb_dataloaders.wrapper import Storage
 
 
 class Naive_Rehearsal(NormalNN):

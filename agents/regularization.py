@@ -113,7 +113,8 @@ class EWC(L2):
         self.eval()
 
         # Accumulate the square of gradients
-        for i, (input, target, task) in enumerate(dataloader):
+        for i, (input, target) in enumerate(dataloader.train):
+            task = -1
             if self.gpu:
                 input = input.cuda()
                 target = target.cuda()
@@ -130,7 +131,8 @@ class EWC(L2):
             # if self.valid_out_dim is an integer, it means only the first 'self.valid_out_dim' dimensions are used
             # in calculating the loss.
             pred = preds[task_name] if not isinstance(self.valid_out_dim, int) else preds[task_name][:,:self.valid_out_dim]
-            ind = pred.max(1)[1].flatten()  # Choose the one with max
+            #ind = pred.max(1)[1].flatten()  # Choose the one with max
+            ind = pred.argmax(axis=1)  # Choose the one with max
 
             # - Alternative ind by multinomial sampling. Its performance is similar. -
             # prob = torch.nn.functional.softmax(preds['All'],dim=1)
@@ -144,7 +146,7 @@ class EWC(L2):
             loss.backward()
             for n, p in importance.items():
                 if self.params[n].grad is not None:  # Some heads can have no grad if no loss applied on them.
-                    p += ((self.params[n].grad ** 2) * len(input) / len(dataloader))
+                    p += ((self.params[n].grad ** 2) * len(input) / sum(1 for _ in dataloader.train))
 
         self.train(mode=mode)
 

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from types import MethodType
 import models
-from utils.metric import accuracy, AverageMeter, Timer
+from clb_utils.metric import accuracy, AverageMeter, Timer
 
 class NormalNN(nn.Module):
     '''
@@ -50,7 +50,7 @@ class NormalNN(nn.Module):
 
         self.optimizer = torch.optim.__dict__[self.config['optimizer']](**optimizer_arg)
         self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=self.config['schedule'],
-                                                              gamma=0)
+                                                              gamma=1)
 
     def create_model(self):
         cfg = self.config
@@ -104,7 +104,9 @@ class NormalNN(nn.Module):
 
         orig_mode = self.training
         self.eval()
-        for i, (input, target, task) in enumerate(dataloader):
+        num_samples = 0
+        test_acc = 0
+        for i, (input, target) in enumerate(dataloader):
 
             if self.gpu:
                 with torch.no_grad():
@@ -114,13 +116,17 @@ class NormalNN(nn.Module):
 
             # Summarize the performance of all tasks, or 1 task, depends on dataloader.
             # Calculated by total number of data.
-            acc = accumulate_acc(output, target, task, acc)
+            acc = accumulate_acc(output, target, -1, acc)
 
+            test_acc += input.shape[0] * accuracy(output['All'], target.argmax(axis=1)) / 100
+            num_samples += input.shape[0]
         self.train(orig_mode)
 
         self.log(' * Val Acc {acc.avg:.3f}, Total time {time:.2f}'
               .format(acc=acc,time=batch_timer.toc()))
-        return acc.avg
+
+
+        return test_acc, num_samples
 
     def criterion(self, preds, targets, tasks, **kwargs):
         # The inputs and targets could come from single task or a mix of tasks
@@ -144,7 +150,7 @@ class NormalNN(nn.Module):
 
     def update_model(self, inputs, targets, tasks):
         out = self.forward(inputs)
-        loss = self.criterion(out, targets, tasks)
+        loss = self.criterion(out, targets.argmax(axis=1), tasks)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -156,6 +162,7 @@ class NormalNN(nn.Module):
             self.init_optimizer()
 
         for epoch in range(self.config['schedule'][-1]):
+            print(f"{epoch=}")
             data_timer = Timer()
             batch_timer = Timer()
             batch_time = AverageMeter()
@@ -174,33 +181,24 @@ class NormalNN(nn.Module):
             data_timer.tic()
             batch_timer.tic()
             self.log('Itr\t\tTime\t\t  Data\t\t  Loss\t\tAcc')
-            for i, (input, target, task) in enumerate(train_loader):
-
+            for i, (input, target) in enumerate(train_loader.train):
                 data_time.update(data_timer.toc())  # measure data loading time
 
                 if self.gpu:
                     input = input.cuda()
                     target = target.cuda()
 
-                loss, output = self.update_model(input, target, task)
+                loss, output = self.update_model(input, target, -1)
                 input = input.detach()
                 target = target.detach()
 
                 # measure accuracy and record loss
-                acc = accumulate_acc(output, target, task, acc)
+                acc = accumulate_acc(output, target, -1, acc)
                 losses.update(loss, input.size(0))
 
                 batch_time.update(batch_timer.toc())  # measure elapsed time
                 data_timer.toc()
 
-                if ((self.config['print_freq']>0) and (i % self.config['print_freq'] == 0)) or (i+1)==len(train_loader):
-                    self.log('[{0}/{1}]\t'
-                          '{batch_time.val:.4f} ({batch_time.avg:.4f})\t'
-                          '{data_time.val:.4f} ({data_time.avg:.4f})\t'
-                          '{loss.val:.3f} ({loss.avg:.3f})\t'
-                          '{acc.val:.2f} ({acc.avg:.2f})'.format(
-                        i, len(train_loader), batch_time=batch_time,
-                        data_time=data_time, loss=losses, acc=acc))
 
             self.log(' * Train Acc {acc.avg:.3f}'.format(acc=acc))
 
@@ -245,7 +243,7 @@ class NormalNN(nn.Module):
 
 def accumulate_acc(output, target, task, meter):
     if 'All' in output.keys(): # Single-headed model
-        meter.update(accuracy(output['All'], target), len(target))
+        meter.update(accuracy(output['All'], target.argmax(axis=1)), len(target))
     else:  # outputs from multi-headed (multi-task) model
         for t, t_out in output.items():
             inds = [i for i in range(len(task)) if task[i] == t]  # The index of inputs that matched specific task

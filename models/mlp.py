@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class MLP(nn.Module):
 
-    def __init__(self, out_dim=10, in_channel=1, img_sz=32, hidden_dim=256):
+    def __init__(self, out_dim=10, in_channel=1, img_sz=28, hidden_dim=256):
         super(MLP, self).__init__()
         self.in_dim = in_channel*img_sz*img_sz
         self.linear = nn.Sequential(
