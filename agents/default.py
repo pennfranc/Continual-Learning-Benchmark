@@ -145,7 +145,10 @@ class NormalNN(nn.Module):
             pred = preds['All']
             if isinstance(self.valid_out_dim, int):  # (Not 'ALL') Mask out the outputs of unseen classes for incremental class scenario
                 pred = preds['All'][:,:self.valid_out_dim]
-            loss = self.criterion_fn(pred, targets.argmax(axis=1))
+            if len(targets.shape) == 2:
+                loss = self.criterion_fn(pred, targets.argmax(axis=1))
+            else:
+                loss = self.criterion_fn(pred, targets)
         return loss
 
     def update_model(self, inputs, targets, tasks):
@@ -198,6 +201,14 @@ class NormalNN(nn.Module):
 
                 batch_time.update(batch_timer.toc())  # measure elapsed time
                 data_timer.toc()
+                
+                # stop early
+                curr_batch_acc = accuracy(output['All'], target.argmax(axis=1))
+                if curr_batch_acc > self.config['stop_early_at_accu'] * 100:
+                    self.log(' * Train Acc {acc.avg:.3f}'.format(acc=acc))
+                    return
+
+                
 
 
             self.log(' * Train Acc {acc.avg:.3f}'.format(acc=acc))
