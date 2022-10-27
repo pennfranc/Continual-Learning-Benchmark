@@ -102,7 +102,7 @@ class EWC(L2):
 
         # Sample a subset (n_fisher_sample) of data to estimate the fisher information (batch_size=1)
         # Otherwise it uses mini-batches for the estimation. This speeds up the process a lot with similar performance.
-        if self.n_fisher_sample is not None:
+        if False and (self.n_fisher_sample is not None): 
             n_sample = min(self.n_fisher_sample, len(dataloader.dataset))
             self.log('Sample',self.n_fisher_sample,'for estimating the F matrix.')
             rand_ind = random.sample(list(range(len(dataloader.dataset))), n_sample)
@@ -111,6 +111,8 @@ class EWC(L2):
 
         mode = self.training
         self.eval()
+
+        num_datapoints = sum(len(input) for (input, target) in dataloader.train)
 
         # Accumulate the square of gradients
         for i, (input, target) in enumerate(dataloader.train):
@@ -146,7 +148,7 @@ class EWC(L2):
             loss.backward()
             for n, p in importance.items():
                 if self.params[n].grad is not None:  # Some heads can have no grad if no loss applied on them.
-                    p += ((self.params[n].grad ** 2) * len(input) / sum(1 for _ in dataloader.train))
+                    p += ((self.params[n].grad ** 2) * len(input) / num_datapoints)
 
         self.train(mode=mode)
 
@@ -211,6 +213,7 @@ class SI(L2):
         for n, p in self.params.items():
             delta = p.detach() - old_params[n]
             if n in unreg_gradients.keys():  # In multi-head network, some head could have no grad (lazy) since no loss go through it.
+                self.w[n] = self.w[n].to(delta.device)
                 self.w[n] -= unreg_gradients[n] * delta  # w[n] is >=0
 
         return loss.detach(), out
@@ -259,6 +262,7 @@ class SI(L2):
 
         # Calculate or accumulate the Omega (the importance matrix)
         for n, p in importance.items():
+            prev_params[n] = prev_params[n].to(self.params[n].detach().device)
             delta_theta = self.params[n].detach() - prev_params[n]
             p += self.w[n]/(delta_theta**2 + self.damping_factor)
             self.w[n].zero_()

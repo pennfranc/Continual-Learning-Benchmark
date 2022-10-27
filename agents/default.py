@@ -145,7 +145,7 @@ class NormalNN(nn.Module):
             pred = preds['All']
             if isinstance(self.valid_out_dim, int):  # (Not 'ALL') Mask out the outputs of unseen classes for incremental class scenario
                 pred = preds['All'][:,:self.valid_out_dim]
-            loss = self.criterion_fn(pred, targets)
+            loss = self.criterion_fn(pred, targets.argmax(axis=1))
         return loss
 
     def update_model(self, inputs, targets, tasks):
